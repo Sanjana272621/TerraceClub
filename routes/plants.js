@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const Plant = require('../models/Plant');
+const { auth } = require('../middleware/auth');
 
-// GET /api/plants - Get all plants
-router.get('/', async (req, res) => {
+// GET /api/plants - Get all plants for logged-in user
+router.get('/', auth, async (req, res) => {
   try {
-    const plants = await Plant.find().sort({ createdAt: -1 });
+    const plants = await Plant.find({ userId: req.userId }).sort({ createdAt: -1 });
     res.json(plants);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -13,11 +14,15 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/plants/:id - Get a single plant
-router.get('/:id', async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
   try {
     const plant = await Plant.findById(req.params.id);
     if (!plant) {
       return res.status(404).json({ message: 'Plant not found' });
+    }
+    // Check ownership
+    if (plant.userId.toString() !== req.userId.toString()) {
+      return res.status(403).json({ message: 'Access denied' });
     }
     res.json(plant);
   } catch (error) {
@@ -26,7 +31,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/plants - Create a new plant
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
     const { name, species, careNotes } = req.body;
     
@@ -37,7 +42,8 @@ router.post('/', async (req, res) => {
     const plant = new Plant({
       name,
       species: species || '',
-      careNotes: careNotes || ''
+      careNotes: careNotes || '',
+      userId: req.userId
     });
 
     const savedPlant = await plant.save();
@@ -48,7 +54,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/plants/:id - Update a plant
-router.put('/:id', async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
   try {
     const { name, species, careNotes } = req.body;
     
@@ -56,7 +62,18 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ message: 'Name is required' });
     }
 
-    const plant = await Plant.findByIdAndUpdate(
+    const plant = await Plant.findById(req.params.id);
+    
+    if (!plant) {
+      return res.status(404).json({ message: 'Plant not found' });
+    }
+
+    // Check ownership
+    if (plant.userId.toString() !== req.userId.toString()) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const updatedPlant = await Plant.findByIdAndUpdate(
       req.params.id,
       {
         name,
@@ -66,25 +83,27 @@ router.put('/:id', async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    if (!plant) {
-      return res.status(404).json({ message: 'Plant not found' });
-    }
-
-    res.json(plant);
+    res.json(updatedPlant);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
 // DELETE /api/plants/:id - Delete a plant
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
   try {
-    const plant = await Plant.findByIdAndDelete(req.params.id);
+    const plant = await Plant.findById(req.params.id);
 
     if (!plant) {
       return res.status(404).json({ message: 'Plant not found' });
     }
 
+    // Check ownership
+    if (plant.userId.toString() !== req.userId.toString()) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    await Plant.findByIdAndDelete(req.params.id);
     res.json({ message: 'Plant deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
+import { getAuthHeader, removeToken } from '../utils/auth';
 
 function EditPlant() {
   const navigate = useNavigate();
@@ -20,15 +20,41 @@ function EditPlant() {
 
   const fetchPlant = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/plants/${id}`);
+      const response = await fetch(`http://localhost:5000/api/plants/${id}`, {
+        headers: getAuthHeader()
+      });
+
+      if (response.status === 401) {
+        removeToken();
+        navigate('/login');
+        return;
+      }
+
+      if (response.status === 404) {
+        setError('Plant not found');
+        setFetching(false);
+        return;
+      }
+
+      if (response.status === 403) {
+        setError('Access denied');
+        setFetching(false);
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch plant');
+      }
+
+      const data = await response.json();
       setFormData({
-        name: response.data.name || '',
-        species: response.data.species || '',
-        careNotes: response.data.careNotes || ''
+        name: data.name || '',
+        species: data.species || '',
+        careNotes: data.careNotes || ''
       });
       setFetching(false);
     } catch (err) {
-      setError(err.response?.status === 404 ? 'Plant not found' : 'Failed to fetch plant');
+      setError(err.message);
       setFetching(false);
       console.error(err);
     }
@@ -53,10 +79,35 @@ function EditPlant() {
     }
 
     try {
-      await axios.put(`http://localhost:5000/api/plants/${id}`, formData);
+      const response = await fetch(`http://localhost:5000/api/plants/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader()
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.status === 401) {
+        removeToken();
+        navigate('/login');
+        return;
+      }
+
+      if (response.status === 403) {
+        setError('Access denied');
+        setLoading(false);
+        return;
+      }
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to update plant');
+      }
+
       navigate('/plants');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update plant');
+      setError(err.message);
       setLoading(false);
     }
   };

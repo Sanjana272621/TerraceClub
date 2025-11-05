@@ -15,7 +15,9 @@ mongoose.connect('mongodb://127.0.0.1:27017/terraceclub')
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Routes
+app.use('/api/auth', require('./routes/auth'));
 app.use('/api/plants', require('./routes/plants'));
+app.use('/api/posts', require('./routes/posts'));
 
 // Basic route
 app.get('/', (req, res) => {

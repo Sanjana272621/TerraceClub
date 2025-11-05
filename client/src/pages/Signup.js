@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getAuthHeader, removeToken } from '../utils/auth';
+import { useNavigate, Link } from 'react-router-dom';
+import { signup } from '../utils/auth';
 
-function AddPlant() {
+function Signup() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
-    species: '',
-    careNotes: ''
+    email: '',
+    password: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -24,33 +24,20 @@ function AddPlant() {
     setLoading(true);
     setError(null);
 
-    if (!formData.name.trim()) {
-      setError('Name is required');
+    if (!formData.name || !formData.email || !formData.password) {
+      setError('All fields are required');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters');
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/plants', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeader()
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (response.status === 401) {
-        removeToken();
-        navigate('/login');
-        return;
-      }
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to add plant');
-      }
-
+      await signup(formData.name, formData.email, formData.password);
       navigate('/plants');
     } catch (err) {
       setError(err.message);
@@ -62,9 +49,10 @@ function AddPlant() {
     <div className="py-16 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-800 mb-4">Add New Plant</h2>
+          <h2 className="text-4xl font-bold text-gray-800 mb-4">Create Account</h2>
+          <p className="text-lg text-gray-600">Sign up to start managing your plants</p>
         </div>
-        <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">
+        <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-8">
           {error && (
             <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
               {error}
@@ -73,7 +61,7 @@ function AddPlant() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
-                Plant Name *
+                Name *
               </label>
               <input
                 type="text"
@@ -82,36 +70,39 @@ function AddPlant() {
                 value={formData.name}
                 onChange={handleChange}
                 required
-                placeholder="e.g., Monstera, Snake Plant..."
+                placeholder="Enter your name"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-colors"
               />
             </div>
             <div>
-              <label htmlFor="species" className="block text-sm font-semibold text-gray-700 mb-2">
-                Species
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                Email *
               </label>
               <input
-                type="text"
-                id="species"
-                name="species"
-                value={formData.species}
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
                 onChange={handleChange}
-                placeholder="e.g., Monstera deliciosa..."
+                required
+                placeholder="Enter your email"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-colors"
               />
             </div>
             <div>
-              <label htmlFor="careNotes" className="block text-sm font-semibold text-gray-700 mb-2">
-                Care Notes
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+                Password *
               </label>
-              <textarea
-                id="careNotes"
-                name="careNotes"
-                value={formData.careNotes}
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
                 onChange={handleChange}
-                placeholder="Water weekly, keep in indirect sunlight..."
-                rows="5"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-colors resize-y"
+                required
+                minLength="6"
+                placeholder="At least 6 characters"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-colors"
               />
             </div>
             <div className="flex gap-4 pt-4">
@@ -120,16 +111,16 @@ function AddPlant() {
                 className="flex-1 px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" 
                 disabled={loading}
               >
-                {loading ? 'Adding...' : 'Add Plant'}
+                {loading ? 'Signing up...' : 'Sign Up'}
               </button>
-              <button
-                type="button"
-                className="flex-1 px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={() => navigate('/plants')}
-                disabled={loading}
-              >
-                Cancel
-              </button>
+            </div>
+            <div className="text-center mt-4">
+              <p className="text-gray-600">
+                Already have an account?{' '}
+                <Link to="/login" className="text-emerald-600 hover:text-emerald-700 font-semibold">
+                  Login
+                </Link>
+              </p>
             </div>
           </form>
         </div>
@@ -138,5 +129,5 @@ function AddPlant() {
   );
 }
 
-export default AddPlant;
+export default Signup;
 

@@ -1,7 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { isAuthenticated } from '../utils/auth';
 
 function Welcome() {
+  const authenticated = isAuthenticated();
+
   return (
     <div className="py-16 px-4">
       <div className="max-w-7xl mx-auto">
@@ -14,20 +17,37 @@ function Welcome() {
           <p className="text-lg text-gray-600 mb-8 leading-relaxed">
             Manage your plant collection with ease. Add plants, track their care, and keep notes all in one place.
           </p>
-          <div className="flex gap-4 justify-center">
-            <Link 
-              to="/plants" 
-              className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors duration-200 shadow-md hover:shadow-lg"
-            >
-              View All Plants
-            </Link>
-            <Link 
-              to="/add" 
-              className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md hover:shadow-lg"
-            >
-              Add New Plant
-            </Link>
-          </div>
+          {authenticated ? (
+            <div className="flex gap-4 justify-center">
+              <Link 
+                to="/plants" 
+                className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors duration-200 shadow-md hover:shadow-lg"
+              >
+                View All Plants
+              </Link>
+              <Link 
+                to="/add" 
+                className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md hover:shadow-lg"
+              >
+                Add New Plant
+              </Link>
+            </div>
+          ) : (
+            <div className="flex gap-4 justify-center">
+              <Link 
+                to="/login" 
+                className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors duration-200 shadow-md hover:shadow-lg"
+              >
+                Login
+              </Link>
+              <Link 
+                to="/signup" 
+                className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md hover:shadow-lg"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

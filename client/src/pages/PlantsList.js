@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
+import { getAuthHeader, removeToken } from '../utils/auth';
 
 function PlantsList() {
+  const navigate = useNavigate();
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,11 +14,25 @@ function PlantsList() {
 
   const fetchPlants = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/plants');
-      setPlants(response.data);
+      const response = await fetch('http://localhost:5000/api/plants', {
+        headers: getAuthHeader()
+      });
+
+      if (response.status === 401) {
+        removeToken();
+        navigate('/login');
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch plants');
+      }
+
+      const data = await response.json();
+      setPlants(data);
       setLoading(false);
     } catch (err) {
-      setError('Failed to fetch plants');
+      setError(err.message);
       setLoading(false);
       console.error(err);
     }
@@ -26,10 +41,24 @@ function PlantsList() {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this plant?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/plants/${id}`);
+        const response = await fetch(`http://localhost:5000/api/plants/${id}`, {
+          method: 'DELETE',
+          headers: getAuthHeader()
+        });
+
+        if (response.status === 401) {
+          removeToken();
+          navigate('/login');
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to delete plant');
+        }
+
         fetchPlants();
       } catch (err) {
-        alert('Failed to delete plant');
+        alert(err.message);
         console.error(err);
       }
     }
