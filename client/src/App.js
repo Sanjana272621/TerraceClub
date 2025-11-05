@@ -58,12 +58,11 @@ function Navigation() {
           <Link to="/" className="text-2xl font-bold text-white">🌱 Terrace Club</Link>
           <div className="flex space-x-6 items-center">
             <Link to="/" className="text-white hover:text-emerald-200 transition-colors duration-200 font-medium">Home</Link>
+            <Link to="/feed" className="text-white hover:text-emerald-200 transition-colors duration-200 font-medium">Social Feed</Link>
             {authenticated ? (
               <>
                 <Link to="/plants" className="text-white hover:text-emerald-200 transition-colors duration-200 font-medium">Plants</Link>
                 <Link to="/add" className="text-white hover:text-emerald-200 transition-colors duration-200 font-medium">Add Plant</Link>
-                <Link to="/feed" className="text-white hover:text-emerald-200 transition-colors duration-200 font-medium">Social Feed</Link>
-                
                 <button
                   onClick={handleLogout}
                   className="text-white hover:text-emerald-200 transition-colors duration-200 font-medium"
